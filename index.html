@@ -397,7 +397,6 @@ cursor:pointer;
     color: white;
     z-index: 3001;
     background: rgba(0,0,0,0.5);
-    /* Evitar que el header se mueva en iOS */
     position: relative;
     flex-shrink: 0;
 }
@@ -405,7 +404,8 @@ cursor:pointer;
     margin: 0;
     font-family: 'Playfair Display', serif;
     font-size: 0.9rem;
-    font-weight: 600;
+    font-weight: 400;
+    letter-spacing: 0.5px;
 }
 .view-modal-header button {
     background: none;
@@ -415,7 +415,6 @@ cursor:pointer;
     padding: 5px;
     cursor: pointer;
     line-height: 1;
-    /* Ajuste para evitar overflow en Safari */
     width: 32px;
     height: 32px;
     display: flex;
@@ -446,19 +445,15 @@ cursor:pointer;
     z-index: 3001;
     display: flex;
     justify-content: center;
-    /* Espacio seguro para la barra de navegación de iOS */
     padding-bottom: max(10px, env(safe-area-inset-bottom));
-    /* Evita que se mueva en iOS */
     position: relative;
     flex-shrink: 0;
 }
 .view-modal-footer button {
     background: var(--primary-orange);
     color: white;
-    /* Ancho ajustado para que quepa en pantallas pequeñas */
     width: 100%;
-    max-width: 280px;
-    /* Padding reducido para Safari */
+    max-width: 220px;
     padding: 12px 24px;
     font-size: 0.85rem;
 }
@@ -489,7 +484,7 @@ cursor:pointer;
 <button class="btn-action" onclick="toggleModal()" style="width:100%; margin-top:20px;">OK</button>
 </div>
 </div>
-<!-- MODAL DE VISUALIZACIÓN (Pantalla Completa - VERTICAL ROTADA - OPTIMIZADO) -->
+<!-- MODAL DE VISUALIZACIÓN -->
 <div id="view-modal" class="view-modal-overlay">
     <div class="view-modal-header">
         <button onclick="closeViewModal()">×</button>
