@@ -369,7 +369,7 @@ background:none;
 font-size:1.5rem;
 cursor:pointer;
 }
-/* --- FULLSCREEN VIEW MODAL (CORREGIDO - VERTICAL) --- */
+/* --- FULLSCREEN VIEW MODAL (VERTICAL - ROTADA) --- */
 .view-modal-overlay {
     display: none;
     position: fixed;
@@ -418,7 +418,6 @@ cursor:pointer;
     align-items: center;
     padding: 20px;
     background: #fff;
-    /* Sin scroll - imagen siempre visible */
     overflow: hidden;
     max-height: calc(100vh - 160px);
 }
@@ -427,8 +426,6 @@ cursor:pointer;
     max-height: 100%;
     object-fit: contain;
     object-position: center;
-    /* Sin scroll */
-    overflow: hidden;
 }
 .view-modal-footer {
     padding: 15px;
@@ -469,12 +466,12 @@ cursor:pointer;
 <button class="btn-action" onclick="toggleModal()" style="width:100%; margin-top:20px;">OK</button>
 </div>
 </div>
-<!-- MODAL DE VISUALIZACIÓN (Pantalla Completa - VERTICAL) -->
+<!-- MODAL DE VISUALIZACIÓN (Pantalla Completa - VERTICAL ROTADA) -->
 <div id="view-modal" class="view-modal-overlay">
     <div class="view-modal-header">
         <button onclick="closeViewModal()">×</button>
         <h2>Vista Previa</h2>
-        <div style="width: 24px;"></div> <!-- Espacio para balancear header -->
+        <div style="width: 24px;"></div>
     </div>
     <div class="view-modal-body">
         <img id="view-img" class="view-modal-img" src="" alt="Vista previa pulsera">
@@ -520,6 +517,7 @@ return CONFIG.emptycharmPrice || CONFIG.charmPrice || 0;
 }
 let zone, catalogContainer, totalPriceDisplay;
 let currentCanvas = null;
+let currentCanvasRotated = null;
 document.addEventListener('DOMContentLoaded', () => {
   if (typeof CONFIG === 'undefined') return;
   initApp();
@@ -692,6 +690,20 @@ const priceText = totalPriceDisplay ? totalPriceDisplay.innerText : "$0";
 ctx.fillText(`Total: ${priceText}`, canvas.width/2, canvas.height - 40);
 return canvas;
 }
+// --- ROTAR CANVAS 90° (para visualización vertical) ---
+function rotateCanvas90Degrees(canvas) {
+    const rotatedCanvas = document.createElement('canvas');
+    const ctx = rotatedCanvas.getContext('2d');
+    // Intercambiar ancho y alto para rotación
+    rotatedCanvas.width = canvas.height;
+    rotatedCanvas.height = canvas.width;
+    
+    ctx.translate(rotatedCanvas.width / 2, rotatedCanvas.height / 2);
+    ctx.rotate(90 * Math.PI / 180);
+    ctx.drawImage(canvas, -canvas.width / 2, -canvas.height / 2);
+    
+    return rotatedCanvas;
+}
 // Helpers
 function loadImage(src) {
 return new Promise((res, rej) => {
@@ -720,11 +732,14 @@ ctx.drawImage(img, x + (w - img.width * r)/2, y + (h - img.height * r)/2, img.wi
 // --- LÓGICA DEL MODAL DE VISUALIZACIÓN ---
 function openViewModal(canvas) {
     currentCanvas = canvas;
+    // Crear versión rotada para visualización vertical
+    currentCanvasRotated = rotateCanvas90Degrees(canvas);
+    
     const img = document.getElementById('view-img');
-    img.src = canvas.toDataURL('image/jpeg', 0.9);
+    img.src = currentCanvasRotated.toDataURL('image/jpeg', 0.9);
+    
     const modal = document.getElementById('view-modal');
     modal.style.display = 'flex';
-    // Pequeño delay para la animación de opacidad
     setTimeout(() => modal.classList.add('active'), 10);
 }
 function closeViewModal() {
@@ -763,7 +778,7 @@ alert("Error al procesar el diseño. Por favor, inténtalo de nuevo.");
     btn.disabled = false;
 }
 };
-// Descargar desde vista previa
+// Descargar desde vista previa (USAR CANVAS ORIGINAL - NO ROTADO)
 document.getElementById('btn-download-from-view').onclick = function() {
     if(!currentCanvas) return;
     const link = document.createElement('a');
