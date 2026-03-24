@@ -7,6 +7,7 @@
 <title>Satana! - Italian Bracelets</title>
 <?!= include('config'); ?> <?!= include('charms'); ?>
 <script>
+// Fallback para entorno local
 if (typeof CONFIG === 'undefined') {
 document.write('<script src="config.js"><\/script>');
 document.write('<script src="charms.js"><\/script>');
@@ -368,72 +369,72 @@ background:none;
 font-size:1.5rem;
 cursor:pointer;
 }
-/* --- Preview Modal for Image --- */
-.preview-modal-content {
-background:var(--bg-paper);
-width:95%;
-max-width:500px;
-padding:20px;
-border-radius:12px;
-border:2px solid var(--primary-orange);
-text-align:center;
-position:relative;
-max-height: 85vh;
-display: flex;
-flex-direction: column;
+/* --- FULLSCREEN VIEW MODAL --- */
+.view-modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #000;
+    z-index: 3000;
+    flex-direction: column;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease;
 }
-.preview-image-container {
-    margin: 20px 0;
-    background: white;
-    border-radius: 8px;
-    overflow: hidden;
-    max-height: 60vh;
+.view-modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+.view-modal-header {
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+    z-index: 3001;
+    background: rgba(0,0,0,0.5);
+}
+.view-modal-header h2 {
+    margin: 0;
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+}
+.view-modal-body {
+    flex: 1;
+    width: 100%;
+    overflow: auto; /* Permite scroll horizontal si el brazalete es largo */
     display: flex;
     justify-content: center;
     align-items: center;
+    padding: 20px 0;
+    background: #fff;
 }
-.preview-image {
+.view-modal-img {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
 }
-.preview-actions {
+.view-modal-footer {
+    padding: 15px;
+    background: rgba(0,0,0,0.5);
+    z-index: 3001;
     display: flex;
-    gap: 10px;
     justify-content: center;
-    margin-top: 15px;
 }
-.preview-actions button {
-    flex: 1;
-}
-.mobile-tip {
-    background: #fff3cd;
-    border: 1px solid #ffc107;
-    color: #856404;
-    padding: 10px 15px;
-    border-radius: 8px;
-    margin: 10px 0;
-    font-size: 0.85rem;
-    text-align: left;
-}
-.success-toast {
-    position: fixed;
-    bottom: 100px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #28a745;
+.view-modal-footer button {
+    background: var(--primary-orange);
     color: white;
-    padding: 12px 24px;
-    border-radius: 25px;
-    font-size: 0.9rem;
-    z-index: 2000;
-    animation: fadeInOut 3s ease-in-out forwards;
+    min-width: 150px;
 }
-@keyframes fadeInOut {
-    0% { opacity: 0; transform: translate(-50%, 20px); }
-    10% { opacity: 1; transform: translate(-50%, 0); }
-    90% { opacity: 1; transform: translate(-50%, 0); }
-    100% { opacity: 0; transform: translate(-50%, -20px); }
+/* --- INSTRUCTION MODAL --- */
+#info-modal .modal-content {
+    position: relative;
+    max-height: 80vh;
+    overflow-y: auto;
 }
 </style>
 </head>
@@ -448,7 +449,7 @@ flex-direction: column;
 <div style="font-size: 1.2rem; color: var(--primary-orange); margin-bottom:15px;">Instrucciones</div>
 <div style="font-family:sans-serif; font-size:0.9rem; line-height:1.6; text-align: left; padding: 0 10px;">
 1- Personalizar tu pulsera<br>
-2- Usa "Copiar" o "Compartir" para guardar el diseño<br>
+2- Presiona "Visualizar" para ver el diseño completo<br>
 3- Envía a <a href="https://instagram.com/Satana.IB" target="_blank" style="color: var(--primary-orange); font-weight:bold; text-decoration:none;">@Satana.IB</a> para realizar tu pedido!<br><br>
 <hr style="border:0; border-top:1px solid #ddd; margin: 15px 0;">
 <div style="text-align: center;"> Precio base: <span id="modal-empty-price" style="font-weight:bold;"></span><br> Precio charm: <span id="modal-charm-price" style="font-weight:bold;"></span> </div>
@@ -456,20 +457,19 @@ flex-direction: column;
 <button class="btn-action" onclick="toggleModal()" style="width:100%; margin-top:20px;">OK</button>
 </div>
 </div>
-<div id="preview-modal" class="modal-overlay">
-<div class="preview-modal-content">
-<button class="modal-close" onclick="closePreview()">×</button>
-<div style="font-size: 1.1rem; color: var(--primary-orange); margin-bottom:10px;">Tu Diseño</div>
-<div class="mobile-tip">
-    <strong>💡 Tip:</strong> Toca y mantén presionado sobre la imagen para guardarla o compartirla.
-</div>
-<div class="preview-image-container">
-    <img id="preview-img" class="preview-image" src="" alt="Vista previa">
-</div>
-<div class="preview-actions">
-    <button class="btn-action" id="btn-download-from-preview">⬇ Guardar Imagen</button>
-</div>
-</div>
+<!-- MODAL DE VISUALIZACIÓN (Pantalla Completa) -->
+<div id="view-modal" class="view-modal-overlay">
+    <div class="view-modal-header">
+        <button style="background:none; border:none; color:white; font-size:1.5rem; padding:5px;" onclick="closeViewModal()">×</button>
+        <h2>Vista Previa</h2>
+        <button style="background:none; border:none; color:white; font-size:1rem; padding:5px;">🔍</button>
+    </div>
+    <div class="view-modal-body">
+        <img id="view-img" class="view-modal-img" src="" alt="Vista previa pulsera">
+    </div>
+    <div class="view-modal-footer">
+        <button id="btn-download-from-view">⬇ Guardar Imagen</button>
+    </div>
 </div>
 <div class="app-container">
 <div class="header">
@@ -497,7 +497,7 @@ flex-direction: column;
 <button class="btn-clear" id="btn-clear">Limpiar</button>
 <div style="display:flex; gap:8px;">
 <button class="btn-action" id="btn-share" style="display:none; background:#1e88e5;">Compartir</button>
-<button class="btn-action" id="btn-copy">📋 Copiar</button>
+<button class="btn-action" id="btn-view">Visualizar</button>
 </div>
 </div>
 </div>
@@ -507,6 +507,7 @@ if (typeof CONFIG === 'undefined') return 0;
 return CONFIG.emptycharmPrice || CONFIG.charmPrice || 0;
 }
 let zone, catalogContainer, totalPriceDisplay;
+let currentCanvas = null;
 document.addEventListener('DOMContentLoaded', () => {
   if (typeof CONFIG === 'undefined') return;
   initApp();
@@ -704,31 +705,25 @@ function drawImageProp(ctx, img, x, y, w, h) {
 const r = Math.min(w / img.width, h / img.height);
 ctx.drawImage(img, x + (w - img.width * r)/2, y + (h - img.height * r)/2, img.width * r, img.height * r);
 }
-// --- MODAL VISTA PREVIA ---
-function openPreview(canvas) {
-    const img = document.getElementById('preview-img');
+// --- LÓGICA DEL MODAL DE VISUALIZACIÓN ---
+function openViewModal(canvas) {
+    currentCanvas = canvas;
+    const img = document.getElementById('view-img');
     img.src = canvas.toDataURL('image/jpeg', 0.9);
-    document.getElementById('preview-modal').style.display = 'flex';
+    const modal = document.getElementById('view-modal');
+    modal.style.display = 'flex';
+    // Pequeño delay para la animación de opacidad
+    setTimeout(() => modal.classList.add('active'), 10);
 }
-function closePreview() {
-    document.getElementById('preview-modal').style.display = 'none';
+function closeViewModal() {
+    const modal = document.getElementById('view-modal');
+    modal.classList.remove('active');
+    setTimeout(() => modal.style.display = 'none', 300);
 }
 window.toggleModal = () => {
 const m = document.getElementById('info-modal');
 if(m) m.style.display = (m.style.display === 'flex') ? 'none' : 'flex';
 };
-// Toast notificación
-function showToast(message) {
-    const toast = document.createElement('div');
-    toast.className = 'success-toast';
-    toast.textContent = message;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
-}
-// Detectar si es móvil
-function isMobile() {
-    return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-}
 document.getElementById('btn-clear').onclick = () => {
 if(confirm("¿Limpiar toda la pulsera?")) {
 zone.innerHTML = '<div class="empty-msg" id="empty-text">Pulsera vacía</div>';
@@ -736,72 +731,36 @@ updateTotal();
 }
 };
 // ==========================================
-// 📋 BOTÓN COPIAR (Funciona en todos lados)
+// 👁️ BOTÓN VISUALIZAR
 // ==========================================
-document.getElementById('btn-copy').onclick = async function() {
+document.getElementById('btn-view').onclick = async function() {
 const btn = this;
-const oldText = btn.innerHTML;
-btn.innerHTML = '⏳ Generando...';
+const oldText = btn.innerText;
+btn.innerText = 'Cargando...';
 btn.disabled = true;
 try {
     const canvas = await generateCanvas();
     if(canvas) {
-        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.9));
-        const file = new File([blob], "diseño_pulsera.jpg", { type: "image/jpeg" });
-        
-        if (isMobile()) {
-            // 📱 MÓVIL: Usar Share API o abrir vista previa
-            if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-                try {
-                    await navigator.share({
-                        files: [file],
-                        title: CONFIG.brandName || 'Mi Diseño',
-                        text: '¡Mira la pulsera que diseñé!'
-                    });
-                    showToast('¡Compartido!');
-                } catch(shareErr) {
-                    if(shareErr.name !== 'AbortError') {
-                        openPreview(canvas);
-                    }
-                }
-            } else {
-                openPreview(canvas);
-            }
-        } else {
-            // 💻 ESCRITORIO: Intentar copiar al portapapeles
-            try {
-                await navigator.clipboard.write([
-                    new ClipboardItem({
-                        [blob.type]: blob
-                    })
-                ]);
-                showToast('¡Imagen copiada al portapapeles!');
-            } catch (clipboardErr) {
-                console.warn("Error copiando al portapapeles:", clipboardErr);
-                openPreview(canvas);
-                showToast('Se abrió vista previa para guardar');
-            }
-        }
+        openViewModal(canvas);
     }
 } catch(e) {
 console.error(e);
 alert("Error al procesar el diseño. Por favor, inténtalo de nuevo.");
 } finally {
-    btn.innerHTML = oldText;
+    btn.innerText = oldText;
     btn.disabled = false;
 }
 };
 // Descargar desde vista previa
-document.getElementById('btn-download-from-preview').onclick = function() {
-    const previewImg = document.getElementById('preview-img');
+document.getElementById('btn-download-from-view').onclick = function() {
+    if(!currentCanvas) return;
     const link = document.createElement('a');
     link.download = `Diseño_${Date.now()}.jpg`;
-    link.href = previewImg.src;
+    link.href = currentCanvas.toDataURL('image/jpeg', 0.9);
     link.click();
-    closePreview();
 };
 // ==========================================
-// 📤 BOTÓN COMPARTIR
+// 📤 BOTÓN COMPARTIR (Mantiene funcionalidad para móvil)
 // ==========================================
 const btnShare = document.getElementById('btn-share');
 if(btnShare) {
@@ -827,7 +786,7 @@ try {
                     console.log("Acción de compartir cancelada o falló:", shareErr);
                 }
             } else {
-                alert("Tu dispositivo no soporta compartir directamente. Usa el botón Copiar.");
+                alert("Tu dispositivo no soporta compartir directamente. Usa Visualizar y luego Guarda.");
             }
         }
     }
