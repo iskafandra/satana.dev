@@ -7,7 +7,6 @@
 <title>Satana! - Italian Bracelets</title>
 <?!= include('config'); ?> <?!= include('charms'); ?>
 <script>
-// Fallback para entorno local
 if (typeof CONFIG === 'undefined') {
 document.write('<script src="config.js"><\/script>');
 document.write('<script src="charms.js"><\/script>');
@@ -18,11 +17,9 @@ document.write('<script src="charms.js"><\/script>');
 <style>
 /* --- ESTILOS GENERALES --- */
 :root {
-/* NUEVO COLOR PRIMARIO INTEGRADO */
 --primary-orange: #d73101;
 --bg-paper: #FFF8F0;
 --text-dark: #3E2723;
-/* Variables Dinámicas */
 --frame-w: 60px;
 --frame-h: 60px;
 --inner-w: 100%;
@@ -39,7 +36,6 @@ font-family: 'Playfair Display', serif;
 background-color: var(--bg-paper);
 margin: 0;
 padding: 0;
-/* Ajuste para móviles: usar altura dinámica del viewport */
 height: 100vh;
 height: 100dvh;
 display: flex;
@@ -54,7 +50,7 @@ flex-direction: column;
 background-color: var(--bg-paper);
 animation: fadeIn 0.5s ease-in;
 }
-/* --- HEADER (Con Nuevo Color) --- */
+/* --- HEADER --- */
 .header {
 background-color: var(--primary-orange);
 color: white;
@@ -73,7 +69,6 @@ align-items: center;
 gap: 15px;
 height: 100%;
 }
-/* LOGO: Integrado */
 .brand-logo {
 height: 70px;
 width: 70px;
@@ -84,7 +79,6 @@ padding: 0;
 background-color: transparent;
 display: none;
 }
-/* TEXTO SECUNDARIO */
 .subtitle {
 font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
 font-size: 0.8rem;
@@ -120,7 +114,7 @@ align-items: center;
 justify-content: center;
 padding: 0;
 }
-/* --- ZONA DE TRABAJO (Scroll Grueso) --- */
+/* --- ZONA DE TRABAJO --- */
 .workspace-section {
 flex-basis: 35%;
 min-height: 160px;
@@ -136,7 +130,6 @@ scroll-behavior: smooth;
 scrollbar-width: auto;
 scrollbar-color: var(--primary-orange) #e0e0e0;
 }
-/* Scrollbar Personalizada */
 .workspace-section::-webkit-scrollbar {
 height: 36px;
 background-color: #e0e0e0;
@@ -259,7 +252,7 @@ background-size: 100% 100%;
 background-repeat: no-repeat;
 pointer-events: none;
 }
-/* --- FOOTER (Ajustado para Móviles) --- */
+/* --- FOOTER --- */
 .footer-actions {
 padding: 12px 20px;
 background-color: #e0e0dc;
@@ -269,9 +262,7 @@ align-items: center;
 gap: 10px;
 border-top: 1px solid #ccc;
 flex-shrink: 0;
-/* CORRECCIÓN: Espacio seguro para iPhone/Android */
 padding-bottom: max(12px, env(safe-area-inset-bottom));
-/* CORRECCIÓN: Margen extra para flotar sobre la barra de navegación */
 margin-bottom: 5px;
 }
 button {
@@ -293,7 +284,7 @@ border: 1px solid #c62828;
 .btn-action {
 background: var(--primary-orange);
 color: white;
-min-width: 110px;
+min-width: 100px;
 }
 .empty-msg {
 width: 100%;
@@ -339,12 +330,12 @@ color: var(--primary-orange);
 font-size: 1.2rem;
 text-align: center;
 }
-/* --- Hidden class for loading state --- */
 .loading-hidden {
 opacity: 0;
 visibility: hidden;
 pointer-events: none;
 }
+/* --- MODALES --- */
 .modal-overlay {
 display: none;
 position: fixed;
@@ -415,6 +406,35 @@ flex-direction: column;
 .preview-actions button {
     flex: 1;
 }
+.mobile-tip {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    color: #856404;
+    padding: 10px 15px;
+    border-radius: 8px;
+    margin: 10px 0;
+    font-size: 0.85rem;
+    text-align: left;
+}
+.success-toast {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #28a745;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 25px;
+    font-size: 0.9rem;
+    z-index: 2000;
+    animation: fadeInOut 3s ease-in-out forwards;
+}
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: translate(-50%, 20px); }
+    10% { opacity: 1; transform: translate(-50%, 0); }
+    90% { opacity: 1; transform: translate(-50%, 0); }
+    100% { opacity: 0; transform: translate(-50%, -20px); }
+}
 </style>
 </head>
 <body>
@@ -428,8 +448,8 @@ flex-direction: column;
 <div style="font-size: 1.2rem; color: var(--primary-orange); margin-bottom:15px;">Instrucciones</div>
 <div style="font-family:sans-serif; font-size:0.9rem; line-height:1.6; text-align: left; padding: 0 10px;">
 1- Personalizar tu pulsera<br>
-2- Presiona "Copiar" para guardar el diseño<br>
-3- Pega en Instagram, WhatsApp o envía a <a href="https://instagram.com/Satana.IB" target="_blank" style="color: var(--primary-orange); font-weight:bold; text-decoration:none;">@Satana.IB</a> para realizar tu pedido!<br><br>
+2- Usa "Copiar" o "Compartir" para guardar el diseño<br>
+3- Envía a <a href="https://instagram.com/Satana.IB" target="_blank" style="color: var(--primary-orange); font-weight:bold; text-decoration:none;">@Satana.IB</a> para realizar tu pedido!<br><br>
 <hr style="border:0; border-top:1px solid #ddd; margin: 15px 0;">
 <div style="text-align: center;"> Precio base: <span id="modal-empty-price" style="font-weight:bold;"></span><br> Precio charm: <span id="modal-charm-price" style="font-weight:bold;"></span> </div>
 </div>
@@ -440,14 +460,14 @@ flex-direction: column;
 <div class="preview-modal-content">
 <button class="modal-close" onclick="closePreview()">×</button>
 <div style="font-size: 1.1rem; color: var(--primary-orange); margin-bottom:10px;">Tu Diseño</div>
+<div class="mobile-tip">
+    <strong>💡 Tip:</strong> Toca y mantén presionado sobre la imagen para guardarla o compartirla.
+</div>
 <div class="preview-image-container">
     <img id="preview-img" class="preview-image" src="" alt="Vista previa">
 </div>
-<div style="font-size:0.85rem; color:#666; margin-bottom:15px; font-family:sans-serif;">
-    Para guardar: Toca y mantén presionado sobre la imagen
-</div>
 <div class="preview-actions">
-    <button class="btn-action" id="btn-download-from-preview">Guardar Imagen</button>
+    <button class="btn-action" id="btn-download-from-preview">⬇ Guardar Imagen</button>
 </div>
 </div>
 </div>
@@ -477,7 +497,7 @@ flex-direction: column;
 <button class="btn-clear" id="btn-clear">Limpiar</button>
 <div style="display:flex; gap:8px;">
 <button class="btn-action" id="btn-share" style="display:none; background:#1e88e5;">Compartir</button>
-<button class="btn-action" id="btn-copy">Copiar</button>
+<button class="btn-action" id="btn-copy">📋 Copiar</button>
 </div>
 </div>
 </div>
@@ -487,23 +507,19 @@ if (typeof CONFIG === 'undefined') return 0;
 return CONFIG.emptycharmPrice || CONFIG.charmPrice || 0;
 }
 let zone, catalogContainer, totalPriceDisplay;
-// Mostrar loading overlay al inicio
 document.addEventListener('DOMContentLoaded', () => {
   if (typeof CONFIG === 'undefined') return;
-  // Iniciar carga inmediatamente
   initApp();
 });
 function initApp() {
 zone = document.getElementById('bracelet-zone');
 catalogContainer = document.getElementById('catalog-container');
 totalPriceDisplay = document.getElementById('total-price');
-// Logo & Branding
 const logoImg = document.getElementById('app-logo');
 if (CONFIG.LOGO && CONFIG.LOGO.trim() !== "") {
 logoImg.src = CONFIG.LOGO;
 logoImg.style.display = "block";
 }
-// Info Modal
 const emptyP = getEmptyPrice();
 const charmP = CONFIG.charmPrice || 0;
 const cur = CONFIG.currency || '$';
@@ -511,7 +527,6 @@ const modalEmpty = document.getElementById('modal-empty-price');
 const modalCharm = document.getElementById('modal-charm-price');
 if(modalEmpty) modalEmpty.innerText = `${cur}${emptyP}`;
 if(modalCharm) modalCharm.innerText = `${cur}${charmP}`;
-// Config CSS
 const root = document.documentElement;
 const h = 65;
 const r = CONFIG.render.frameWidth / CONFIG.render.frameHeight;
@@ -535,7 +550,6 @@ if(btnShare) btnShare.style.display = 'block';
 }
 initCatalog();
 updateTotal();
-// Ocultar loading overlay después de inicializar
 setTimeout(() => {
 const loadingOverlay = document.getElementById('loading-overlay');
 if (loadingOverlay) {
@@ -585,7 +599,6 @@ checkEmpty();
 };
 zone.appendChild(wrapper);
 updateTotal();
-// Auto-scroll al final (Contenedor)
 setTimeout(() => {
 const scroller = document.getElementById('scroll-container');
 if(scroller) {
@@ -650,7 +663,6 @@ if(charmImg) drawImageProp(ctx, charmImg, chX, chY, chW, chH);
 if(frameToUse) ctx.drawImage(frameToUse, x, y, itemW, itemH);
 ctx.shadowColor = "transparent";
 }
-// BRANDING (Color Canvas Fijo)
 const textY = 80;
 ctx.textAlign = "center";
 if (CONFIG.LOGO && CONFIG.LOGO.trim() !== "") {
@@ -667,7 +679,7 @@ const priceText = totalPriceDisplay ? totalPriceDisplay.innerText : "$0";
 ctx.fillText(`Total: ${priceText}`, canvas.width/2, canvas.height - 40);
 return canvas;
 }
-// Helpers & Listeners
+// Helpers
 function loadImage(src) {
 return new Promise((res, rej) => {
 if(!src) {
@@ -705,53 +717,78 @@ window.toggleModal = () => {
 const m = document.getElementById('info-modal');
 if(m) m.style.display = (m.style.display === 'flex') ? 'none' : 'flex';
 };
+// Toast notificación
+function showToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'success-toast';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+// Detectar si es móvil
+function isMobile() {
+    return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+}
 document.getElementById('btn-clear').onclick = () => {
 if(confirm("¿Limpiar toda la pulsera?")) {
 zone.innerHTML = '<div class="empty-msg" id="empty-text">Pulsera vacía</div>';
 updateTotal();
 }
 };
-// BOTÓN COPIAR (Multiplataforma)
+// ==========================================
+// 📋 BOTÓN COPIAR (Funciona en todos lados)
+// ==========================================
 document.getElementById('btn-copy').onclick = async function() {
 const btn = this;
-const oldText = btn.innerText;
-btn.innerText = 'Generando...';
+const oldText = btn.innerHTML;
+btn.innerHTML = '⏳ Generando...';
 btn.disabled = true;
 try {
     const canvas = await generateCanvas();
     if(canvas) {
-        // Intentar usar Share API primero (funciona mejor en iOS)
-        if (navigator.share && navigator.canShare) {
-            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.9));
-            const file = new File([blob], "diseño_pulsera.jpg", { type: "image/jpeg" });
-            if (navigator.canShare({ files: [file] })) {
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+        const file = new File([blob], "diseño_pulsera.jpg", { type: "image/jpeg" });
+        
+        if (isMobile()) {
+            // 📱 MÓVIL: Usar Share API o abrir vista previa
+            if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
                 try {
                     await navigator.share({
                         files: [file],
                         title: CONFIG.brandName || 'Mi Diseño',
                         text: '¡Mira la pulsera que diseñé!'
                     });
-                    btn.innerText = '¡Listo!';
-                    setTimeout(() => btn.innerText = oldText, 2000);
-                    return;
+                    showToast('¡Compartido!');
                 } catch(shareErr) {
-                    // Si el usuario cancela el share, no hacemos nada
                     if(shareErr.name !== 'AbortError') {
-                        console.warn("Share falló:", shareErr);
+                        openPreview(canvas);
                     }
                 }
+            } else {
+                openPreview(canvas);
+            }
+        } else {
+            // 💻 ESCRITORIO: Intentar copiar al portapapeles
+            try {
+                await navigator.clipboard.write([
+                    new ClipboardItem({
+                        [blob.type]: blob
+                    })
+                ]);
+                showToast('¡Imagen copiada al portapapeles!');
+            } catch (clipboardErr) {
+                console.warn("Error copiando al portapapeles:", clipboardErr);
+                openPreview(canvas);
+                showToast('Se abrió vista previa para guardar');
             }
         }
-        // Fallback: Mostrar vista previa para guardar manualmente
-        openPreview(canvas);
-        btn.innerText = 'Vista previa';
-        setTimeout(() => btn.innerText = oldText, 3000);
     }
 } catch(e) {
 console.error(e);
 alert("Error al procesar el diseño. Por favor, inténtalo de nuevo.");
 } finally {
-btn.disabled = false;
+    btn.innerHTML = oldText;
+    btn.disabled = false;
 }
 };
 // Descargar desde vista previa
@@ -763,8 +800,9 @@ document.getElementById('btn-download-from-preview').onclick = function() {
     link.click();
     closePreview();
 };
-
-// Botón Compartir (Mantiene funcionalidad para PC)
+// ==========================================
+// 📤 BOTÓN COMPARTIR
+// ==========================================
 const btnShare = document.getElementById('btn-share');
 if(btnShare) {
 btnShare.onclick = async function() {
@@ -802,7 +840,7 @@ try {
 }
 };
 }
-// Añadir clase para responsive en móvil
+// Ajustes responsive
 document.addEventListener('DOMContentLoaded', function() {
 const subtitle = document.querySelector('.subtitle');
 if (window.innerWidth <= 480) {
