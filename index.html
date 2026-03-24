@@ -377,6 +377,44 @@ background:none;
 font-size:1.5rem;
 cursor:pointer;
 }
+/* --- Preview Modal for Image --- */
+.preview-modal-content {
+background:var(--bg-paper);
+width:95%;
+max-width:500px;
+padding:20px;
+border-radius:12px;
+border:2px solid var(--primary-orange);
+text-align:center;
+position:relative;
+max-height: 85vh;
+display: flex;
+flex-direction: column;
+}
+.preview-image-container {
+    margin: 20px 0;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    max-height: 60vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.preview-image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+.preview-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 15px;
+}
+.preview-actions button {
+    flex: 1;
+}
 </style>
 </head>
 <body>
@@ -390,12 +428,27 @@ cursor:pointer;
 <div style="font-size: 1.2rem; color: var(--primary-orange); margin-bottom:15px;">Instrucciones</div>
 <div style="font-family:sans-serif; font-size:0.9rem; line-height:1.6; text-align: left; padding: 0 10px;">
 1- Personalizar tu pulsera<br>
-2- Copiar diseño<br>
-3- Pegar en Instagram, WhatsApp o enviar a <a href="https://instagram.com/Satana.IB" target="_blank" style="color: var(--primary-orange); font-weight:bold; text-decoration:none;">@Satana.IB</a> para realizar tu pedido!<br><br>
+2- Presiona "Copiar" para guardar el diseño<br>
+3- Pega en Instagram, WhatsApp o envía a <a href="https://instagram.com/Satana.IB" target="_blank" style="color: var(--primary-orange); font-weight:bold; text-decoration:none;">@Satana.IB</a> para realizar tu pedido!<br><br>
 <hr style="border:0; border-top:1px solid #ddd; margin: 15px 0;">
 <div style="text-align: center;"> Precio base: <span id="modal-empty-price" style="font-weight:bold;"></span><br> Precio charm: <span id="modal-charm-price" style="font-weight:bold;"></span> </div>
 </div>
 <button class="btn-action" onclick="toggleModal()" style="width:100%; margin-top:20px;">OK</button>
+</div>
+</div>
+<div id="preview-modal" class="modal-overlay">
+<div class="preview-modal-content">
+<button class="modal-close" onclick="closePreview()">×</button>
+<div style="font-size: 1.1rem; color: var(--primary-orange); margin-bottom:10px;">Tu Diseño</div>
+<div class="preview-image-container">
+    <img id="preview-img" class="preview-image" src="" alt="Vista previa">
+</div>
+<div style="font-size:0.85rem; color:#666; margin-bottom:15px; font-family:sans-serif;">
+    Para guardar: Toca y mantén presionado sobre la imagen
+</div>
+<div class="preview-actions">
+    <button class="btn-action" id="btn-download-from-preview">Guardar Imagen</button>
+</div>
 </div>
 </div>
 <div class="app-container">
@@ -569,7 +622,6 @@ const ctx = canvas.getContext('2d');
 const itemW = CONFIG.render.frameWidth;
 const itemH = CONFIG.render.frameHeight;
 const overlap = itemW * 0.025;
-// CORRECCIÓN DE SINTAXIS: * en lugar de _
 const totalW = (wrappers.length * itemW) - (wrappers.length - 1) * overlap;
 canvas.width = Math.max(800, totalW + 100);
 canvas.height = itemH + 300;
@@ -589,7 +641,6 @@ const x = startX + (i * (itemW - overlap));
 const y = startY;
 const chW = itemW * CONFIG.render.scaleX;
 const chH = itemH * CONFIG.render.scaleY;
-// CORRECCIÓN DE SINTAXIS: * en lugar de _
 const chX = x + ((itemW/2) + (itemW * CONFIG.render.moveX) - (chW/2));
 const chY = y + ((itemH/2) + (itemH * CONFIG.render.moveY) - (chH/2));
 ctx.shadowColor = "rgba(0,0,0,0.15)";
@@ -612,7 +663,6 @@ ctx.drawImage(logoImg, (canvas.width/2) - (logoSize/2), textY - 70, logoSize, lo
 ctx.fillStyle = "#333";
 ctx.font = "300 24px Helvetica Neue, Helvetica, sans-serif";
 ctx.fillText("ITALIAN BRACELETS", canvas.width/2, textY + 30);
-// CORRECCIÓN DE SINTAXIS: Paréntesis faltantes
 const priceText = totalPriceDisplay ? totalPriceDisplay.innerText : "$0";
 ctx.fillText(`Total: ${priceText}`, canvas.width/2, canvas.height - 40);
 return canvas;
@@ -633,7 +683,6 @@ res(i);
 };
 i.onerror = (error) => {
 console.warn("Error cargando imagen:", src, error);
-// Devolver null en lugar de rechazar para evitar errores
 res(null);
 };
 i.src = src;
@@ -641,8 +690,16 @@ i.src = src;
 }
 function drawImageProp(ctx, img, x, y, w, h) {
 const r = Math.min(w / img.width, h / img.height);
-// CORRECCIÓN DE SINTAXIS: * en lugar de _
 ctx.drawImage(img, x + (w - img.width * r)/2, y + (h - img.height * r)/2, img.width * r, img.height * r);
+}
+// --- MODAL VISTA PREVIA ---
+function openPreview(canvas) {
+    const img = document.getElementById('preview-img');
+    img.src = canvas.toDataURL('image/jpeg', 0.9);
+    document.getElementById('preview-modal').style.display = 'flex';
+}
+function closePreview() {
+    document.getElementById('preview-modal').style.display = 'none';
 }
 window.toggleModal = () => {
 const m = document.getElementById('info-modal');
@@ -654,47 +711,60 @@ zone.innerHTML = '<div class="empty-msg" id="empty-text">Pulsera vacía</div>';
 updateTotal();
 }
 };
-// NUEVA FUNCIONALIDAD: BOTÓN COPIAR
+// BOTÓN COPIAR (Multiplataforma)
 document.getElementById('btn-copy').onclick = async function() {
 const btn = this;
 const oldText = btn.innerText;
-btn.innerText = 'Copiando...';
+btn.innerText = 'Generando...';
 btn.disabled = true;
 try {
-const canvas = await generateCanvas();
-if(canvas) {
-canvas.toBlob(async function(blob) {
-if (blob) {
-try {
-// Intentar copiar al portapapeles
-const clipboardItem = new ClipboardItem({
-    [blob.type]: blob
-});
-await navigator.clipboard.write([clipboardItem]);
-alert("¡Diseño copiado! Ahora puedes pegarlo en Instagram o WhatsApp.");
-} catch (clipboardErr) {
-// Fallback si el navegador no soporta copia de imagen directa
-console.error("Error en portapapeles:", clipboardErr);
-alert("No se pudo copiar automáticamente. Intenta usar el botón 'Compartir' o descarga la imagen.");
-// Fallback opcional: Descargar automáticamente si falla copiar
-const link = document.createElement('a');
-link.download = `Diseño_${Date.now()}.jpg`;
-link.href = canvas.toDataURL('image/jpeg', 0.9);
-link.click();
-}
-}
-});
-}
+    const canvas = await generateCanvas();
+    if(canvas) {
+        // Intentar usar Share API primero (funciona mejor en iOS)
+        if (navigator.share && navigator.canShare) {
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+            const file = new File([blob], "diseño_pulsera.jpg", { type: "image/jpeg" });
+            if (navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({
+                        files: [file],
+                        title: CONFIG.brandName || 'Mi Diseño',
+                        text: '¡Mira la pulsera que diseñé!'
+                    });
+                    btn.innerText = '¡Listo!';
+                    setTimeout(() => btn.innerText = oldText, 2000);
+                    return;
+                } catch(shareErr) {
+                    // Si el usuario cancela el share, no hacemos nada
+                    if(shareErr.name !== 'AbortError') {
+                        console.warn("Share falló:", shareErr);
+                    }
+                }
+            }
+        }
+        // Fallback: Mostrar vista previa para guardar manualmente
+        openPreview(canvas);
+        btn.innerText = 'Vista previa';
+        setTimeout(() => btn.innerText = oldText, 3000);
+    }
 } catch(e) {
 console.error(e);
 alert("Error al procesar el diseño. Por favor, inténtalo de nuevo.");
 } finally {
-btn.innerText = oldText;
 btn.disabled = false;
 }
 };
+// Descargar desde vista previa
+document.getElementById('btn-download-from-preview').onclick = function() {
+    const previewImg = document.getElementById('preview-img');
+    const link = document.createElement('a');
+    link.download = `Diseño_${Date.now()}.jpg`;
+    link.href = previewImg.src;
+    link.click();
+    closePreview();
+};
 
-// CORRECCIÓN DEFINITIVA DEL BOTÓN COMPARTIR (Mantiene compatibilidad si se desea usar)
+// Botón Compartir (Mantiene funcionalidad para PC)
 const btnShare = document.getElementById('btn-share');
 if(btnShare) {
 btnShare.onclick = async function() {
@@ -719,7 +789,7 @@ try {
                     console.log("Acción de compartir cancelada o falló:", shareErr);
                 }
             } else {
-                alert("Tu dispositivo no soporta compartir directamente. Usa el botón Copiar para guardarlo.");
+                alert("Tu dispositivo no soporta compartir directamente. Usa el botón Copiar.");
             }
         }
     }
@@ -734,7 +804,6 @@ try {
 }
 // Añadir clase para responsive en móvil
 document.addEventListener('DOMContentLoaded', function() {
-// Ajustar el texto del subtitle en móviles
 const subtitle = document.querySelector('.subtitle');
 if (window.innerWidth <= 480) {
 subtitle.style.whiteSpace = 'normal';
