@@ -369,7 +369,7 @@ background:none;
 font-size:1.5rem;
 cursor:pointer;
 }
-/* --- FULLSCREEN VIEW MODAL --- */
+/* --- FULLSCREEN VIEW MODAL (CORREGIDO - VERTICAL) --- */
 .view-modal-overlay {
     display: none;
     position: fixed;
@@ -402,21 +402,33 @@ cursor:pointer;
     font-family: 'Playfair Display', serif;
     font-size: 1rem;
 }
+.view-modal-header button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 2rem;
+    padding: 5px 10px;
+    cursor: pointer;
+}
 .view-modal-body {
     flex: 1;
     width: 100%;
-    overflow: auto; /* Permite scroll horizontal si el brazalete es largo */
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 20px 0;
+    padding: 20px;
     background: #fff;
+    /* Sin scroll - imagen siempre visible */
+    overflow: hidden;
+    max-height: calc(100vh - 160px);
 }
 .view-modal-img {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
-    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    object-position: center;
+    /* Sin scroll */
+    overflow: hidden;
 }
 .view-modal-footer {
     padding: 15px;
@@ -457,12 +469,12 @@ cursor:pointer;
 <button class="btn-action" onclick="toggleModal()" style="width:100%; margin-top:20px;">OK</button>
 </div>
 </div>
-<!-- MODAL DE VISUALIZACIÓN (Pantalla Completa) -->
+<!-- MODAL DE VISUALIZACIÓN (Pantalla Completa - VERTICAL) -->
 <div id="view-modal" class="view-modal-overlay">
     <div class="view-modal-header">
-        <button style="background:none; border:none; color:white; font-size:1.5rem; padding:5px;" onclick="closeViewModal()">×</button>
+        <button onclick="closeViewModal()">×</button>
         <h2>Vista Previa</h2>
-        <button style="background:none; border:none; color:white; font-size:1rem; padding:5px;">🔍</button>
+        <div style="width: 24px;"></div> <!-- Espacio para balancear header -->
     </div>
     <div class="view-modal-body">
         <img id="view-img" class="view-modal-img" src="" alt="Vista previa pulsera">
@@ -760,7 +772,7 @@ document.getElementById('btn-download-from-view').onclick = function() {
     link.click();
 };
 // ==========================================
-// 📤 BOTÓN COMPARTIR (Mantiene funcionalidad para móvil)
+// 📤 BOTÓN COMPARTIR
 // ==========================================
 const btnShare = document.getElementById('btn-share');
 if(btnShare) {
