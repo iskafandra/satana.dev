@@ -369,7 +369,7 @@ background:none;
 font-size:1.5rem;
 cursor:pointer;
 }
-/* --- FULLSCREEN VIEW MODAL (OPTIMIZADO - iOS) --- */
+/* --- FULLSCREEN VIEW MODAL (REORGANIZADO 3 COLUMNAS) --- */
 .view-modal-overlay {
     display: none;
     position: fixed;
@@ -399,13 +399,35 @@ cursor:pointer;
     background: rgba(0,0,0,0.5);
     position: relative;
     flex-shrink: 0;
+    height: 56px;
 }
-.view-modal-header h2 {
+.view-modal-header-left,
+.view-modal-header-right {
+    width: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.view-modal-header-center {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+}
+.view-modal-header-title {
     margin: 0;
-    font-family: 'Playfair Display', serif;
-    font-size: 0.9rem;
-    font-weight: 400;
-    letter-spacing: 0.5px;
+    font-family: sans-serif;
+    font-weight: bold;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: white;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
 }
 .view-modal-header button {
     background: none;
@@ -420,6 +442,18 @@ cursor:pointer;
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
+}
+.view-modal-header button.btn-download {
+    padding: 8px 16px;
+    font-size: 0.72rem;
+    font-family: sans-serif;
+    font-weight: bold;
+    text-transform: uppercase;
+    background: white;
+    color: var(--primary-orange);
+    border-radius: 20px;
+    min-width: 70px;
 }
 .view-modal-body {
     flex: 1;
@@ -484,12 +518,18 @@ cursor:pointer;
 <button class="btn-action" onclick="toggleModal()" style="width:100%; margin-top:20px;">OK</button>
 </div>
 </div>
-<!-- MODAL DE VISUALIZACIÓN -->
+<!-- MODAL DE VISUALIZACIÓN (REORGANIZADO) -->
 <div id="view-modal" class="view-modal-overlay">
     <div class="view-modal-header">
-        <button onclick="closeViewModal()">×</button>
-        <h2>Vista Previa</h2>
-        <div style="width: 32px;"></div>
+        <div class="view-modal-header-left">
+            <button onclick="closeViewModal()">×</button>
+        </div>
+        <div class="view-modal-header-center">
+            <h2 class="view-modal-header-title">VISTA PREVIA</h2>
+        </div>
+        <div class="view-modal-header-right">
+            <button id="btn-download-from-header" class="btn-download">⬇ Descargar</button>
+        </div>
     </div>
     <div class="view-modal-body">
         <img id="view-img" class="view-modal-img" src="" alt="Vista previa pulsera">
@@ -790,7 +830,15 @@ alert("Error al procesar el diseño. Por favor, inténtalo de nuevo.");
     btn.disabled = false;
 }
 };
-// Descargar desde vista previa
+// Descargar desde vista previa (HEADER)
+document.getElementById('btn-download-from-header').onclick = function() {
+    if(!currentCanvas) return;
+    const link = document.createElement('a');
+    link.download = `Diseño_${Date.now()}.jpg`;
+    link.href = currentCanvas.toDataURL('image/jpeg', 0.9);
+    link.click();
+};
+// Descargar desde vista previa (FOOTER)
 document.getElementById('btn-download-from-view').onclick = function() {
     if(!currentCanvas) return;
     const link = document.createElement('a');
