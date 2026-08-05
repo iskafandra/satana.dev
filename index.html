@@ -115,6 +115,45 @@ align-items: center;
 justify-content: center;
 padding: 0;
 }
+/* --- TABS --- */
+.tabs-bar {
+display: flex;
+background-color: #e0e0dc;
+border-bottom: 2px solid #ccc;
+flex-shrink: 0;
+z-index: 15;
+}
+.tab-btn {
+flex: 1;
+padding: 13px 8px;
+text-align: center;
+font-family: sans-serif;
+font-weight: bold;
+font-size: 0.78rem;
+letter-spacing: 0.5px;
+text-transform: uppercase;
+color: #888;
+background: transparent;
+border: none;
+border-bottom: 3px solid transparent;
+cursor: pointer;
+box-shadow: none;
+border-radius: 0;
+}
+.tab-btn.active {
+color: var(--primary-orange);
+border-bottom-color: var(--primary-orange);
+background-color: rgba(215,49,1,0.06);
+}
+.tab-content {
+display: none;
+}
+.tab-content.active {
+display: flex;
+flex-direction: column;
+flex: 1;
+min-height: 0;
+}
 /* --- ZONA DE TRABAJO --- */
 .workspace-section {
 flex-basis: 35%;
@@ -166,7 +205,7 @@ height: 100%;
 cursor: grab;
 z-index: 2;
 }
-/* --- CATÁLOGO --- */
+/* --- CATÁLOGO DE DIJES (dentro de Personalizada) --- */
 .catalog-section {
 flex-grow: 1;
 padding: 15px;
@@ -252,6 +291,68 @@ z-index: 2;
 background-size: 100% 100%;
 background-repeat: no-repeat;
 pointer-events: none;
+}
+/* Dijes estáticos usados en las tarjetas del catálogo de diseños */
+.design-charm {
+cursor: default;
+}
+/* --- CATÁLOGO DE DISEÑOS (pestaña Catálogo) --- */
+#tab-catalogo.active {
+overflow-y: auto;
+-webkit-overflow-scrolling: touch;
+padding: 16px;
+gap: 18px;
+background-color: #f2f2f0;
+}
+.design-card {
+background: #fff;
+border-radius: 12px;
+box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+padding: 14px;
+flex-shrink: 0;
+}
+.design-card-header {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 10px;
+}
+.design-title {
+font-family: 'Playfair Display', serif;
+font-weight: 700;
+color: var(--text-dark);
+font-size: 1rem;
+}
+.design-price {
+font-family: sans-serif;
+font-weight: bold;
+color: var(--primary-orange);
+font-size: 0.85rem;
+white-space: nowrap;
+}
+.design-strip {
+display: flex;
+align-items: center;
+overflow-x: auto;
+padding: 10px 4px;
+-webkit-overflow-scrolling: touch;
+scrollbar-width: thin;
+scrollbar-color: var(--primary-orange) #eee;
+}
+.design-strip::-webkit-scrollbar {
+height: 8px;
+}
+.design-strip::-webkit-scrollbar-track {
+background-color: #eee;
+border-radius: 4px;
+}
+.design-strip::-webkit-scrollbar-thumb {
+background-color: var(--primary-orange);
+border-radius: 4px;
+}
+.design-use-btn {
+width: 100%;
+margin-top: 10px;
 }
 /* --- FOOTER --- */
 .footer-actions {
@@ -532,13 +633,22 @@ cursor:pointer;
 <button class="info-btn" onclick="toggleModal()">i</button>
 </div>
 </div>
+
+<!-- BARRA DE PESTAÑAS -->
+<div class="tabs-bar">
+<button class="tab-btn active" id="tabbtn-personalizada" onclick="switchTab('personalizada')">Personalizada</button>
+<button class="tab-btn" id="tabbtn-catalogo" onclick="switchTab('catalogo')">Catálogo</button>
+</div>
+
+<!-- PESTAÑA: PERSONALIZADA (funcionalidad actual, sin cambios) -->
+<div id="tab-personalizada" class="tab-content active">
 <section class="workspace-section" id="scroll-container">
 <div id="bracelet-zone">
 <div class="empty-msg" id="empty-text">Pulsera vacía</div>
 </div>
 </section>
 <section class="catalog-section">
-<div class="section-title">Catálogo</div>
+<div class="section-title">Dijes</div>
 <div class="catalog-grid" id="catalog-container"></div>
 </section>
 <div class="footer-actions">
@@ -548,6 +658,13 @@ cursor:pointer;
 <button class="btn-action" id="btn-view">Visualizar</button>
 </div>
 </div>
+</div>
+
+<!-- PESTAÑA: CATÁLOGO (nueva - diseños de pulseras predefinidos) -->
+<div id="tab-catalogo" class="tab-content">
+<div id="designs-list"></div>
+</div>
+
 </div>
 <script>
 function getEmptyPrice() {
@@ -599,6 +716,7 @@ const btnShare = document.getElementById('btn-share');
 if(btnShare) btnShare.style.display = 'block';
 }
 initCatalog();
+initDesignsCatalog();
 updateTotal();
 setTimeout(() => {
 const loadingOverlay = document.getElementById('loading-overlay');
@@ -672,6 +790,90 @@ if(!isNaN(p)) total += p;
 if(totalPriceDisplay) {
 totalPriceDisplay.innerText = `${CONFIG.currency}${total.toLocaleString()}`;
 }
+}
+// ==========================================
+// 🗂️ PESTAÑAS
+// ==========================================
+function switchTab(tab) {
+const isPersonal = tab === 'personalizada';
+const tabPersonal = document.getElementById('tab-personalizada');
+const tabCatalogo = document.getElementById('tab-catalogo');
+const btnPersonal = document.getElementById('tabbtn-personalizada');
+const btnCatalogo = document.getElementById('tabbtn-catalogo');
+if(tabPersonal) tabPersonal.classList.toggle('active', isPersonal);
+if(tabCatalogo) tabCatalogo.classList.toggle('active', !isPersonal);
+if(btnPersonal) btnPersonal.classList.toggle('active', isPersonal);
+if(btnCatalogo) btnCatalogo.classList.toggle('active', !isPersonal);
+}
+window.switchTab = switchTab;
+// ==========================================
+// 📖 CATÁLOGO DE DISEÑOS (pestaña Catálogo)
+// ==========================================
+function createStaticCharmWrapper(charmObj, isSpecial) {
+const wrapper = document.createElement('div');
+wrapper.className = 'charm-wrapper design-charm';
+const safeFrames = (typeof FRAMES !== 'undefined') ? FRAMES : { DEFAULT: '', FIRST: '' };
+let frameUrl = safeFrames.DEFAULT;
+if (isSpecial && safeFrames.FIRST) frameUrl = safeFrames.FIRST;
+wrapper.innerHTML = `<img src="${charmObj.src}" class="charm-img-layer"><div class="frame-layer" style="background-image: url('${frameUrl}')"></div>`;
+return wrapper;
+}
+function initDesignsCatalog() {
+const container = document.getElementById('designs-list');
+if (!container || typeof CHARMS_DB === 'undefined' || CHARMS_DB.length === 0) return;
+const cur = CONFIG.currency || '$';
+const charmP = CONFIG.charmPrice || 0;
+const emptyP = getEmptyPrice();
+const lengths = [5, 6, 7, 4, 8, 6, 5, 7, 6, 9];
+const fragment = document.createDocumentFragment();
+for (let d = 0; d < 10; d++) {
+const count = Math.min(lengths[d % lengths.length], Math.max(2, CHARMS_DB.length));
+const indices = [0];
+for (let i = 1; i < count; i++) {
+let idx = (d * 3 + i * 2) % CHARMS_DB.length;
+if (idx === 0) idx = (idx + 1) % CHARMS_DB.length;
+indices.push(idx);
+}
+const price = emptyP + (indices.length - 1) * charmP;
+
+const card = document.createElement('div');
+card.className = 'design-card';
+
+const header = document.createElement('div');
+header.className = 'design-card-header';
+header.innerHTML = `<span class="design-title">Diseño N.º ${d + 1}</span><span class="design-price">${cur}${price.toLocaleString()}</span>`;
+
+const strip = document.createElement('div');
+strip.className = 'design-strip';
+indices.forEach((charmIdx, pos) => {
+const charmObj = CHARMS_DB[charmIdx];
+if (!charmObj) return;
+strip.appendChild(createStaticCharmWrapper(charmObj, pos === 0));
+});
+
+const useBtn = document.createElement('button');
+useBtn.className = 'btn-action design-use-btn';
+useBtn.innerText = 'Personalizar este diseño';
+useBtn.onclick = () => useDesign(indices);
+
+card.appendChild(header);
+card.appendChild(strip);
+card.appendChild(useBtn);
+fragment.appendChild(card);
+}
+container.appendChild(fragment);
+}
+function useDesign(indices) {
+if (!zone || typeof CHARMS_DB === 'undefined') return;
+const hasItems = zone.querySelectorAll('.charm-wrapper').length > 0;
+if (hasItems && !confirm('Esto reemplazará tu pulsera personalizada actual. ¿Continuar?')) return;
+zone.innerHTML = '<div class="empty-msg" id="empty-text">Pulsera vacía</div>';
+indices.forEach((charmIdx, pos) => {
+const charmObj = CHARMS_DB[charmIdx];
+if (!charmObj) return;
+addCharm(charmObj, pos === 0);
+});
+switchTab('personalizada');
 }
 // --- GENERADOR CANVAS ---
 async function generateCanvas() {
