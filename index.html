@@ -338,6 +338,13 @@ padding: 10px 4px;
 -webkit-overflow-scrolling: touch;
 scrollbar-width: thin;
 scrollbar-color: var(--primary-orange) #eee;
+cursor: grab;
+touch-action: pan-y;
+scroll-behavior: smooth;
+}
+.design-strip.dragging {
+cursor: grabbing;
+scroll-behavior: auto;
 }
 .design-strip::-webkit-scrollbar {
 height: 8px;
@@ -350,9 +357,12 @@ border-radius: 4px;
 background-color: var(--primary-orange);
 border-radius: 4px;
 }
-.design-use-btn {
-width: 100%;
-margin-top: 10px;
+.design-strip img,
+.design-strip .frame-layer {
+-webkit-user-drag: none;
+user-select: none;
+-webkit-touch-callout: none;
+pointer-events: none;
 }
 /* --- FOOTER --- */
 .footer-actions {
@@ -660,7 +670,7 @@ cursor:pointer;
 </div>
 </div>
 
-<!-- PESTAÑA: CATÁLOGO (nueva - diseños de pulseras predefinidos) -->
+<!-- PESTAÑA: CATÁLOGO (nueva - diseños de pulseras predefinidos, solo exhibición) -->
 <div id="tab-catalogo" class="tab-content">
 <div id="designs-list"></div>
 </div>
@@ -807,7 +817,38 @@ if(btnCatalogo) btnCatalogo.classList.toggle('active', !isPersonal);
 }
 window.switchTab = switchTab;
 // ==========================================
-// 📖 CATÁLOGO DE DISEÑOS (pestaña Catálogo)
+// 🖐️ DRAG-SCROLL HORIZONTAL (para tiras del catálogo)
+// Permite deslizar tocando/arrastrando en cualquier punto de la tira,
+// incluyendo directamente sobre los dijes.
+// ==========================================
+function attachDragScroll(el) {
+let isDown = false;
+let startX = 0;
+let scrollStart = 0;
+el.addEventListener('pointerdown', (e) => {
+isDown = true;
+startX = e.clientX;
+scrollStart = el.scrollLeft;
+el.classList.add('dragging');
+try { el.setPointerCapture(e.pointerId); } catch(err) {}
+});
+el.addEventListener('pointermove', (e) => {
+if(!isDown) return;
+const dx = e.clientX - startX;
+el.scrollLeft = scrollStart - dx;
+});
+function stopDrag(e) {
+if(!isDown) return;
+isDown = false;
+el.classList.remove('dragging');
+try { el.releasePointerCapture(e.pointerId); } catch(err) {}
+}
+el.addEventListener('pointerup', stopDrag);
+el.addEventListener('pointercancel', stopDrag);
+el.addEventListener('pointerleave', stopDrag);
+}
+// ==========================================
+// 📖 CATÁLOGO DE DISEÑOS (pestaña Catálogo, solo exhibición)
 // ==========================================
 function createStaticCharmWrapper(charmObj, isSpecial) {
 const wrapper = document.createElement('div');
@@ -815,7 +856,7 @@ wrapper.className = 'charm-wrapper design-charm';
 const safeFrames = (typeof FRAMES !== 'undefined') ? FRAMES : { DEFAULT: '', FIRST: '' };
 let frameUrl = safeFrames.DEFAULT;
 if (isSpecial && safeFrames.FIRST) frameUrl = safeFrames.FIRST;
-wrapper.innerHTML = `<img src="${charmObj.src}" class="charm-img-layer"><div class="frame-layer" style="background-image: url('${frameUrl}')"></div>`;
+wrapper.innerHTML = `<img src="${charmObj.src}" class="charm-img-layer" draggable="false"><div class="frame-layer" style="background-image: url('${frameUrl}')"></div>`;
 return wrapper;
 }
 function initDesignsCatalog() {
@@ -850,30 +891,13 @@ const charmObj = CHARMS_DB[charmIdx];
 if (!charmObj) return;
 strip.appendChild(createStaticCharmWrapper(charmObj, pos === 0));
 });
-
-const useBtn = document.createElement('button');
-useBtn.className = 'btn-action design-use-btn';
-useBtn.innerText = 'Personalizar este diseño';
-useBtn.onclick = () => useDesign(indices);
+attachDragScroll(strip);
 
 card.appendChild(header);
 card.appendChild(strip);
-card.appendChild(useBtn);
 fragment.appendChild(card);
 }
 container.appendChild(fragment);
-}
-function useDesign(indices) {
-if (!zone || typeof CHARMS_DB === 'undefined') return;
-const hasItems = zone.querySelectorAll('.charm-wrapper').length > 0;
-if (hasItems && !confirm('Esto reemplazará tu pulsera personalizada actual. ¿Continuar?')) return;
-zone.innerHTML = '<div class="empty-msg" id="empty-text">Pulsera vacía</div>';
-indices.forEach((charmIdx, pos) => {
-const charmObj = CHARMS_DB[charmIdx];
-if (!charmObj) return;
-addCharm(charmObj, pos === 0);
-});
-switchTab('personalizada');
 }
 // --- GENERADOR CANVAS ---
 async function generateCanvas() {
