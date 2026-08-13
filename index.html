@@ -359,6 +359,33 @@ user-select: none;
 pointer-events: none;
 }
 /* --- FOOTER --- */
+.total-bar {
+display: none; /* oculto hasta que haya al menos un dije */
+justify-content: space-between;
+align-items: center;
+padding: 10px 20px;
+background-color: #e0e0dc;
+border-top: 1px solid #ccc;
+flex-shrink: 0;
+}
+.total-bar.visible {
+display: flex;
+}
+.total-label {
+font-family: sans-serif;
+font-size: 0.8rem;
+font-weight: bold;
+text-transform: uppercase;
+letter-spacing: 0.5px;
+color: #666;
+}
+.total-amount {
+font-family: sans-serif;
+font-size: 1.3rem;
+font-weight: bold;
+color: var(--primary-orange);
+white-space: nowrap;
+}
 .footer-actions {
 padding: 12px 20px;
 background-color: #e0e0dc;
@@ -633,7 +660,6 @@ cursor:pointer;
 </div>
 </div>
 <div style="display:flex; align-items:center;">
-<div class="price-display" id="total-price">$0</div>
 <button class="info-btn" onclick="toggleModal()">i</button>
 </div>
 </div>
@@ -655,6 +681,10 @@ cursor:pointer;
 <div class="section-title">Dijes</div>
 <div class="catalog-grid" id="catalog-container"></div>
 </section>
+<div class="total-bar" id="total-bar">
+<span class="total-label">Total</span>
+<span class="total-amount" id="total-price">$0</span>
+</div>
 <div class="footer-actions">
 <button class="btn-clear" id="btn-clear">Limpiar</button>
 <div style="display:flex; gap:8px;">
@@ -794,6 +824,9 @@ if(!isNaN(p)) total += p;
 if(totalPriceDisplay) {
 totalPriceDisplay.innerText = `${CONFIG.currency}${total.toLocaleString()}`;
 }
+// El total solo se muestra si hay al menos un dije en la pulsera.
+const totalBar = document.getElementById('total-bar');
+if(totalBar) totalBar.classList.toggle('visible', wrappers.length > 0);
 }
 // ==========================================
 // 🗂️ PESTAÑAS
