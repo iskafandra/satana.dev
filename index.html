@@ -6,6 +6,7 @@
 <title>Satana! - Italian Bracelets</title>
 <script src="config.js"></script>
 <script src="charms.js"></script>
+<script src="designs.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 <style>
@@ -854,34 +855,35 @@ return wrapper;
 }
 function initDesignsCatalog() {
 const container = document.getElementById('designs-list');
-if (!container || typeof CHARMS_DB === 'undefined' || CHARMS_DB.length === 0) return;
+if (!container || typeof DESIGNS_DB === 'undefined' || DESIGNS_DB.length === 0) return;
 const cur = CONFIG.currency || '$';
 const charmP = CONFIG.charmPrice || 0;
 const emptyP = getEmptyPrice();
-const lengths = [5, 6, 7, 4, 8, 6, 5, 7, 6, 9];
 const fragment = document.createDocumentFragment();
-for (let d = 0; d < 10; d++) {
-const count = Math.min(lengths[d % lengths.length], Math.max(2, CHARMS_DB.length));
-const indices = [0];
-for (let i = 1; i < count; i++) {
-let idx = (d * 3 + i * 2) % CHARMS_DB.length;
-if (idx === 0) idx = (idx + 1) % CHARMS_DB.length;
-indices.push(idx);
-}
-const price = emptyP + (indices.length - 1) * charmP;
+DESIGNS_DB.forEach((design) => {
+const charms = (design && design.charms) ? design.charms : [];
+if (charms.length === 0) return;
+// Precio: primer dije = broche especial (emptyP), el resto a charmP.
+const price = emptyP + Math.max(0, charms.length - 1) * charmP;
 
 const card = document.createElement('div');
 card.className = 'design-card';
 
 const header = document.createElement('div');
 header.className = 'design-card-header';
-header.innerHTML = `<span class="design-title">Diseño N.º ${d + 1}</span><span class="design-price">${cur}${price.toLocaleString()}</span>`;
+const titleEl = document.createElement('span');
+titleEl.className = 'design-title';
+titleEl.textContent = design.nombre || '';
+const priceEl = document.createElement('span');
+priceEl.className = 'design-price';
+priceEl.textContent = `${cur}${price.toLocaleString()}`;
+header.appendChild(titleEl);
+header.appendChild(priceEl);
 
 const strip = document.createElement('div');
 strip.className = 'design-strip';
-indices.forEach((charmIdx, pos) => {
-const charmObj = CHARMS_DB[charmIdx];
-if (!charmObj) return;
+charms.forEach((charmObj, pos) => {
+if (!charmObj || !charmObj.src) return;
 strip.appendChild(createStaticCharmWrapper(charmObj, pos === 0));
 });
 attachDragScroll(strip);
@@ -889,7 +891,7 @@ attachDragScroll(strip);
 card.appendChild(header);
 card.appendChild(strip);
 fragment.appendChild(card);
-}
+});
 container.appendChild(fragment);
 }
 // --- GENERADOR CANVAS ---
