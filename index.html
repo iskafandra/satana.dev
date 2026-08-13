@@ -915,9 +915,12 @@ header.appendChild(priceEl);
 
 const strip = document.createElement('div');
 strip.className = 'design-strip';
-charms.forEach((charmObj, pos) => {
+// En el catálogo cada charm es un diseño real (incluida la posición 0),
+// así que todos usan el marco con ventana (DEFAULT). El broche opaco FIRST
+// solo aplica en Personalizada, donde el primer charm sí es el broche.
+charms.forEach((charmObj) => {
 if (!charmObj || !charmObj.src) return;
-strip.appendChild(createStaticCharmWrapper(charmObj, pos === 0));
+strip.appendChild(createStaticCharmWrapper(charmObj, false));
 });
 attachDragScroll(strip);
 
