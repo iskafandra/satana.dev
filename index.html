@@ -606,7 +606,83 @@ cursor:pointer;
     object-position: center;
     border-radius: 4px;
 }
-/* Footer eliminado - ya no se muestra */
+.view-modal-footer {
+    flex-shrink: 0;
+    background: rgba(0,0,0,0.85);
+    padding: 12px 15px calc(12px + env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 3001;
+}
+.view-modal-footer .vm-hint {
+    font-family: sans-serif;
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.7);
+    text-align: center;
+    line-height: 1.35;
+    margin: 0;
+}
+.view-modal-footer .vm-actions {
+    display: flex;
+    gap: 10px;
+}
+.vm-btn {
+    flex: 1;
+    padding: 14px 12px;
+    border-radius: 26px;
+    border: none;
+    font-family: sans-serif;
+    font-weight: bold;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    line-height: 1;
+}
+.vm-btn:disabled { opacity: 0.5; cursor: default; }
+.vm-btn-secondary {
+    flex: 0 0 auto;
+    background: transparent;
+    color: #fff;
+    border: 1.5px solid rgba(255,255,255,0.55);
+    min-width: 120px;
+}
+.vm-btn-primary {
+    background: var(--primary-orange);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(215,49,1,0.45);
+}
+.vm-btn-primary svg { width: 18px; height: 18px; flex-shrink: 0; }
+/* --- TOAST --- */
+.toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(124px + env(safe-area-inset-bottom));
+    transform: translateX(-50%) translateY(20px);
+    max-width: min(90vw, 420px);
+    background: #2b2b2b;
+    color: #fff;
+    padding: 14px 18px;
+    border-radius: 12px;
+    font-family: sans-serif;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    z-index: 4000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    text-align: center;
+}
+.toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
 /* --- INSTRUCTION MODAL --- */
 #info-modal .modal-content {
     position: relative;
@@ -643,14 +719,23 @@ cursor:pointer;
         <div class="view-modal-header-center">
             <h2 class="view-modal-header-title">VISTA PREVIA</h2>
         </div>
-        <div class="view-modal-header-right">
-            <button id="btn-download-from-header" class="btn-download">DESCARGAR</button>
-        </div>
+        <div class="view-modal-header-right"></div>
     </div>
     <div class="view-modal-body">
         <img id="view-img" class="view-modal-img" src="" alt="Vista previa pulsera">
     </div>
+    <div class="view-modal-footer">
+        <p class="vm-hint">Descargá la imagen y pedila por DM &mdash; copiamos el detalle de tu pulsera 🖤</p>
+        <div class="vm-actions">
+            <button id="btn-download-from-header" class="vm-btn vm-btn-secondary">Descargar</button>
+            <button id="btn-order-instagram" class="vm-btn vm-btn-primary">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4.2" stroke="currentColor" stroke-width="2"/><circle cx="17.4" cy="6.6" r="1.4" fill="currentColor"/></svg>
+                Pedir por Instagram
+            </button>
+        </div>
+    </div>
 </div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
 <div class="app-container">
 <div class="header">
 <div class="header-branding">
@@ -783,6 +868,7 @@ const wrapper = document.createElement('div');
 wrapper.className = 'charm-wrapper';
 const thisPrice = isSpecialType ? getEmptyPrice() : CONFIG.charmPrice;
 wrapper.dataset.price = thisPrice;
+wrapper.dataset.name = (charmObj && charmObj.nombre != null) ? String(charmObj.nombre) : '';
 if (isSpecialType) wrapper.dataset.type = "special";
 const safeFrames = (typeof FRAMES !== 'undefined') ? FRAMES : { DEFAULT: '', FIRST: '' };
 let frameUrl = safeFrames.DEFAULT;
@@ -1076,6 +1162,71 @@ document.getElementById('btn-download-from-header').onclick = function() {
     link.href = currentCanvas.toDataURL('image/jpeg', 0.9);
     link.click();
 };
+// ==========================================
+// 📩 PEDIR POR INSTAGRAM
+// ==========================================
+// Arma el detalle del pedido a partir de la pulsera armada (dijes en orden).
+function buildOrderRecipe() {
+    const wrappers = zone.querySelectorAll('.charm-wrapper');
+    const cur = CONFIG.currency || '$';
+    let total = 0;
+    const lines = [];
+    wrappers.forEach((w, idx) => {
+        total += parseFloat(w.dataset.price) || 0;
+        const isSpecial = w.dataset.type === 'special';
+        const name = w.dataset.name || '';
+        const label = isSpecial ? 'Broche' : (name ? `Dije #${name}` : 'Dije');
+        lines.push(`${idx + 1}. ${label}`);
+    });
+    const n = wrappers.length;
+    const msg =
+        `¡Hola Satana! 🖤 Quiero pedir esta pulsera:\n\n` +
+        lines.join('\n') +
+        `\n\n${n} pieza${n !== 1 ? 's' : ''} · Total ${cur}${total.toLocaleString()}\n\n` +
+        `(Adjunto la imagen del diseño)`;
+    return { msg, total, count: n };
+}
+// Copia texto al portapapeles con fallback para navegadores viejos.
+function copyToClipboard(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        return navigator.clipboard.writeText(text).catch(() => fallbackCopy(text));
+    }
+    return Promise.resolve(fallbackCopy(text));
+}
+function fallbackCopy(text) {
+    try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.focus(); ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+    } catch (e) { /* sin portapapeles: seguimos igual */ }
+}
+let toastTimer = null;
+function showToast(message, ms = 4500) {
+    const t = document.getElementById('toast');
+    if (!t) return;
+    t.textContent = message;
+    t.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), ms);
+}
+const btnOrder = document.getElementById('btn-order-instagram');
+if (btnOrder) {
+    btnOrder.onclick = function() {
+        const handle = CONFIG.instagram || 'Satana.IB';
+        const { msg } = buildOrderRecipe();
+        // Instagram no permite pre-cargar el texto del DM: copiamos la receta
+        // para que el cliente la pegue en el chat.
+        copyToClipboard(msg);
+        showToast('📋 Copiamos tu pedido. Pegalo en el chat de Instagram y adjuntá la imagen que descargaste 🖤', 6000);
+        // Abrimos el DM dentro del gesto del click (evita bloqueo de pop-ups).
+        window.open(`https://ig.me/m/${handle}`, '_blank');
+    };
+}
 // ==========================================
 // 📤 BOTÓN COMPARTIR
 // ==========================================
