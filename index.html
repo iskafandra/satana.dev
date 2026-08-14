@@ -294,14 +294,14 @@ cursor: default;
 #tab-catalogo.active {
 overflow-y: auto;
 -webkit-overflow-scrolling: touch;
-padding: 16px;
-gap: 18px;
+padding: 18px 16px 28px;
+gap: 24px;
 background-color: #f2f2f0;
 }
 .design-card {
 background: #fff;
-border-radius: 12px;
-box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+border-radius: 14px;
+box-shadow: 0 1px 2px rgba(0,0,0,0.06), 0 8px 22px rgba(0,0,0,0.10);
 padding: 14px;
 flex-shrink: 0;
 }
@@ -317,13 +317,37 @@ font-weight: 700;
 color: var(--text-dark);
 font-size: 1rem;
 }
-.design-price {
+.design-buy {
+display: inline-flex;
+align-items: center;
+gap: 6px;
+padding: 6px 11px;
+border: none;
+border-radius: 20px;
+background: var(--primary-orange);
+color: #fff;
 font-family: sans-serif;
-font-weight: bold;
-color: var(--primary-orange);
-font-size: 0.85rem;
+cursor: pointer;
 white-space: nowrap;
+line-height: 1;
+flex-shrink: 0;
+box-shadow: 0 1px 4px rgba(215,49,1,0.22);
 }
+.design-buy .ig { width: 12px; height: 12px; flex-shrink: 0; opacity: 0.7; }
+.design-buy .pedir {
+font-weight: 500;
+font-size: 0.58rem;
+text-transform: uppercase;
+letter-spacing: 0.6px;
+opacity: 0.9;
+}
+.design-buy .price {
+font-weight: 500;
+font-size: 0.74rem;
+padding-left: 6px;
+border-left: 1px solid rgba(255,255,255,0.35);
+}
+.design-buy:active { transform: translateY(1px); }
 .design-strip {
 display: flex;
 align-items: center;
@@ -335,6 +359,11 @@ scrollbar-color: var(--primary-orange) #eee;
 cursor: grab;
 touch-action: pan-y;
 scroll-behavior: smooth;
+/* Fundido dinámico en los extremos: aparece solo donde queda contenido por ver
+   (los anchos --fade-left/right los ajusta JS según la posición de scroll). */
+-webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--fade-left, 0px), #000 calc(100% - var(--fade-right, 0px)), transparent 100%);
+mask-image: linear-gradient(to right, transparent 0, #000 var(--fade-left, 0px), #000 calc(100% - var(--fade-right, 0px)), transparent 100%);
+transition: none;
 }
 .design-strip.dragging {
 cursor: grabbing;
@@ -927,17 +956,41 @@ if(tabPersonal) tabPersonal.classList.toggle('active', isPersonal);
 if(tabCatalogo) tabCatalogo.classList.toggle('active', !isPersonal);
 if(btnPersonal) btnPersonal.classList.toggle('active', isPersonal);
 if(btnCatalogo) btnCatalogo.classList.toggle('active', !isPersonal);
+// Al mostrar el catálogo, los strips recién ahora tienen ancho: recalcular fundido.
+if(!isPersonal) {
+requestAnimationFrame(() => {
+document.querySelectorAll('#designs-list .design-strip').forEach(s => updateStripFade(s));
+});
+}
 }
 window.switchTab = switchTab;
+window.addEventListener('resize', () => {
+document.querySelectorAll('#designs-list .design-strip').forEach(s => updateStripFade(s));
+});
 // ==========================================
 // 🖐️ DRAG-SCROLL HORIZONTAL (para tiras del catálogo)
 // Permite deslizar tocando/arrastrando en cualquier punto de la tira,
 // incluyendo directamente sobre los dijes.
 // ==========================================
+// Ajusta el ancho del fundido en cada extremo según cuánto quede por scrollear.
+function updateStripFade(el) {
+const F = 26; // px de fundido
+const max = el.scrollWidth - el.clientWidth;
+if (max <= 1) { // no hay overflow: sin fundido
+el.style.setProperty('--fade-left', '0px');
+el.style.setProperty('--fade-right', '0px');
+return;
+}
+const x = el.scrollLeft;
+el.style.setProperty('--fade-left', (x > 2 ? F : 0) + 'px');
+el.style.setProperty('--fade-right', (x < max - 2 ? F : 0) + 'px');
+}
 function attachDragScroll(el) {
 let isDown = false;
 let startX = 0;
 let scrollStart = 0;
+el.addEventListener('scroll', () => updateStripFade(el), { passive: true });
+requestAnimationFrame(() => updateStripFade(el));
 el.addEventListener('pointerdown', (e) => {
 isDown = true;
 startX = e.clientX;
@@ -993,11 +1046,17 @@ header.className = 'design-card-header';
 const titleEl = document.createElement('span');
 titleEl.className = 'design-title';
 titleEl.textContent = design.nombre || '';
-const priceEl = document.createElement('span');
-priceEl.className = 'design-price';
-priceEl.textContent = `${cur}${price.toLocaleString()}`;
+// Botón unificado: pedir + precio (con el logo IG sutil), en el lugar del precio.
+const buyBtn = document.createElement('button');
+buyBtn.type = 'button';
+buyBtn.className = 'design-buy';
+buyBtn.innerHTML = `<svg class="ig" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4.2" stroke="currentColor" stroke-width="2"/><circle cx="17.4" cy="6.6" r="1.4" fill="currentColor"/></svg><span class="pedir">Pedir</span><span class="price">${cur}${price.toLocaleString()}</span>`;
+buyBtn.onclick = () => sendOrderToInstagram(
+    buildDesignRecipe(design.nombre || 'Diseño', price, charms.length),
+    '📋 Copiamos tu pedido. Pegalo en el chat de Instagram para pedir este diseño 🖤'
+);
 header.appendChild(titleEl);
-header.appendChild(priceEl);
+header.appendChild(buyBtn);
 
 const strip = document.createElement('div');
 strip.className = 'design-strip';
@@ -1214,17 +1273,27 @@ function showToast(message, ms = 4500) {
     if (toastTimer) clearTimeout(toastTimer);
     toastTimer = setTimeout(() => t.classList.remove('show'), ms);
 }
+// Copia la receta y abre el DM. Instagram no permite pre-cargar texto del DM,
+// por eso el cliente pega lo copiado en el chat. Se abre dentro del gesto del
+// click para evitar el bloqueo de pop-ups.
+function sendOrderToInstagram(msg, toastMsg) {
+    const handle = CONFIG.instagram || 'Satana.IB';
+    copyToClipboard(msg);
+    showToast(toastMsg, 6000);
+    window.open(`https://ig.me/m/${handle}`, '_blank');
+}
+// Receta para un diseño del catálogo: el nombre es identificador inequívoco
+// (no hacen falta códigos de dije ni imagen adjunta).
+function buildDesignRecipe(nombre, price, count) {
+    const cur = CONFIG.currency || '$';
+    return `¡Hola Satana! 🖤 Quiero pedir el diseño "${nombre}" (${count} dijes).\n\n` +
+        `Total ${cur}${price.toLocaleString()}`;
+}
 const btnOrder = document.getElementById('btn-order-instagram');
 if (btnOrder) {
     btnOrder.onclick = function() {
-        const handle = CONFIG.instagram || 'Satana.IB';
         const { msg } = buildOrderRecipe();
-        // Instagram no permite pre-cargar el texto del DM: copiamos la receta
-        // para que el cliente la pegue en el chat.
-        copyToClipboard(msg);
-        showToast('📋 Copiamos tu pedido. Pegalo en el chat de Instagram y adjuntá la imagen que descargaste 🖤', 6000);
-        // Abrimos el DM dentro del gesto del click (evita bloqueo de pop-ups).
-        window.open(`https://ig.me/m/${handle}`, '_blank');
+        sendOrderToInstagram(msg, '📋 Copiamos tu pedido. Pegalo en el chat de Instagram y adjuntá la imagen que descargaste 🖤');
     };
 }
 // ==========================================
